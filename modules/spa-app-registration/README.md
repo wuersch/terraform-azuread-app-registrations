@@ -1,0 +1,66 @@
+# SPA App Registration Module
+
+Creates an Entra ID App Registration for a Single Page Application using PKCE authentication.
+
+## Usage
+
+```hcl
+module "spa" {
+  source = "../../modules/spa-app-registration"
+
+  display_name  = "My SPA"
+  redirect_uris = ["http://localhost:3000"]
+  api_client_id = module.api.application_id
+  api_scope_id  = module.api.oauth2_scope_ids["user_access"]
+}
+```
+
+## Variables
+
+| Name | Type | Default | Description |
+|------|------|---------|-------------|
+| `display_name` | string | required | Display name for the app registration |
+| `redirect_uris` | list(string) | required | SPA redirect URIs |
+| `sign_in_audience` | string | `"AzureADMyOrg"` | Sign-in audience |
+| `api_client_id` | string | required | Backend API application ID |
+| `api_scope_id` | string | required | Backend API `user_access` scope ID |
+
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| `application_id` | Application (client) ID |
+| `object_id` | Application object ID |
+| `service_principal_id` | Service principal object ID |
+| `msal_config` | MSAL.js configuration object |
+
+## Security Configuration
+
+- **Authentication**: Authorization Code flow with PKCE
+- **Implicit flow**: Disabled (both access and ID tokens)
+- **Client secret**: Not used (public client)
+
+## API Permissions
+
+Automatically configured:
+
+| API | Permission | Type |
+|-----|------------|------|
+| Microsoft Graph | `User.Read` | Delegated |
+| Backend API | `user_access` | Delegated |
+
+## MSAL.js Configuration
+
+The `msal_config` output provides ready-to-use configuration:
+
+```javascript
+const msalConfig = {
+  auth: {
+    clientId: "...",
+    authority: "https://login.microsoftonline.com/...",
+    redirectUri: "http://localhost:3000"
+  }
+};
+
+const apiScopes = ["api://.../user_access"];
+```
