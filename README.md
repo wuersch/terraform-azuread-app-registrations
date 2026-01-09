@@ -16,8 +16,17 @@ Terraform modules for managing Azure Entra ID (Azure AD) App Registrations for S
 │   └── spa-app-registration/    # SPA frontend module
 ├── environments/
 │   ├── test/                    # Test tenant (DEV, INT, PREPROD, PREPROD02)
-│   └── prod/                    # Production tenant
+│   └── prod/                    # Production tenant (separate state)
 ```
+
+## Tenants and Environments
+
+| Directory | Tenant | Stages | State |
+|-----------|--------|--------|-------|
+| `environments/test/` | Test tenant | DEV, INT, PREPROD, PREPROD02 | Local or Azure blob |
+| `environments/prod/` | Production tenant | PROD | Azure blob (separate) |
+
+Stages within the test tenant are distinguished by naming convention (e.g., "MyApp API (DEV)").
 
 ## Quick Start
 
@@ -25,74 +34,87 @@ Terraform modules for managing Azure Entra ID (Azure AD) App Registrations for S
 # Authenticate to Azure
 az login
 
-# Deploy to DEV stage
+# Deploy to test tenant
 cd environments/test
 terraform init
-terraform plan -var-file=dev.tfvars
-terraform apply -var-file=dev.tfvars
-
-# Destroy when done testing
-terraform destroy -var-file=dev.tfvars
+terraform plan
+terraform apply
 ```
-
-## Environments
-
-| Environment | Stages | State Backend | Description |
-|-------------|--------|---------------|-------------|
-| test | DEV, INT, PREPROD, PREPROD02 | Local (personal) / Azure blob (corporate) | Test tenant |
-| prod | PROD | Azure blob | Production tenant |
 
 ## Configuration
 
-### Stage-specific tfvars
-
-Create `<stage>.tfvars` files for each stage:
+Edit `terraform.tfvars` to configure your applications:
 
 ```hcl
-# int.tfvars
-environment = "int"
-app_name    = "MyApp"
+environment = "dev"
 
-spa_redirect_uris = [
-  "https://myapp-int.company.com"
-]
+backends = {
+  myapp = {
+    display_name       = "MyApp API"
+    create_role_groups = true
+    # owners = ["00000000-0000-0000-0000-000000000000"]
+  }
+}
 
-role_group_assignments = {
-  user   = "group-object-id"
-  admin  = "group-object-id"
+spas = {
+  myapp-web = {
+    display_name  = "MyApp Web"
+    backend       = "myapp"  # References key from backends map
+    redirect_uris = ["https://myapp.example.com", "http://localhost:3000"]
+  }
 }
 ```
 
-### Multiple Applications
+### Multiple SPAs per Backend
 
-Deploy multiple SPA/API pairs in the same environment:
+You can have multiple SPAs sharing the same backend API:
 
 ```hcl
-# main.tf
-module "portal_api" {
-  source       = "../../modules/api-app-registration"
-  display_name = "Customer Portal API"
+backends = {
+  portal = {
+    display_name       = "Portal API"
+    create_role_groups = true
+  }
 }
 
-module "portal_spa" {
-  source        = "../../modules/spa-app-registration"
-  display_name  = "Customer Portal SPA"
-  api_client_id = module.portal_api.application_id
-  api_scope_id  = module.portal_api.oauth2_scope_ids["user_access"]
-  # ...
+spas = {
+  portal-web = {
+    display_name  = "Portal Web"
+    backend       = "portal"
+    redirect_uris = ["https://portal.example.com"]
+  }
+  portal-admin = {
+    display_name  = "Portal Admin"
+    backend       = "portal"
+    redirect_uris = ["https://admin.portal.example.com"]
+  }
 }
+```
 
-module "dashboard_api" {
-  source       = "../../modules/api-app-registration"
-  display_name = "Internal Dashboard API"
-}
+### Custom App Roles
 
-module "dashboard_spa" {
-  source        = "../../modules/spa-app-registration"
-  display_name  = "Internal Dashboard SPA"
-  api_client_id = module.dashboard_api.application_id
-  api_scope_id  = module.dashboard_api.oauth2_scope_ids["user_access"]
-  # ...
+Override the default roles (user, viewer, admin):
+
+```hcl
+backends = {
+  billing = {
+    display_name = "Billing API"
+    app_roles = {
+      reader = {
+        display_name = "Reader"
+        description  = "View invoices"
+      }
+      admin = {
+        display_name = "Admin"
+        description  = "Manage billing"
+      }
+    }
+    # Assign existing Azure AD groups to roles
+    role_group_assignments = {
+      reader = "11111111-1111-1111-1111-111111111111"
+      admin  = "22222222-2222-2222-2222-222222222222"
+    }
+  }
 }
 ```
 
@@ -101,18 +123,22 @@ module "dashboard_spa" {
 ### MSAL.js Configuration (Frontend)
 
 ```bash
-terraform output -json msal_config
+terraform output -json spas
 ```
 
 ```json
 {
-  "auth": {
-    "clientId": "xxx",
-    "authority": "https://login.microsoftonline.com/xxx",
-    "redirectUri": "http://localhost:3000"
-  },
-  "api": {
-    "scopes": ["api://xxx/user_access"]
+  "myapp-web": {
+    "msal_config": {
+      "auth": {
+        "clientId": "xxx",
+        "authority": "https://login.microsoftonline.com/xxx",
+        "redirectUri": "http://localhost:3000"
+      },
+      "api": {
+        "scopes": ["api://xxx/user_access"]
+      }
+    }
   }
 }
 ```
@@ -120,7 +146,7 @@ terraform output -json msal_config
 ### Spring Boot Configuration (Backend)
 
 ```bash
-terraform output -json spring_boot_config
+terraform output -json backends
 ```
 
 ## Security Features
@@ -128,15 +154,21 @@ terraform output -json spring_boot_config
 - **PKCE**: Authorization Code flow with PKCE (no client secrets for SPA)
 - **No implicit flow**: Explicitly disabled
 - **Admin consent**: API scope requires admin consent
-- **App roles**: user, viewer, admin roles with group assignments
+- **App roles**: Configurable roles with group assignments
+- **Pre-authorization**: SPAs are pre-authorized to access their backend API
 
 ## Optional Features
 
 | Feature | Variable | Default | Requirement |
 |---------|----------|---------|-------------|
 | Create test groups | `create_role_groups` | false | - |
-| Claims mapping (sAMAccountName) | `enable_claims_mapping` | false | Azure AD Premium |
-| Client secret for API | `create_client_secret` | false | - |
+| Custom app roles | `app_roles` | user/viewer/admin | - |
+| Set owners | `owners` | [] (creator) | - |
+| Claims mapping | `enable_claims_mapping` | false | Azure AD Premium |
+
+## Client Secrets
+
+Client secrets are not managed by Terraform. Create them manually in the Azure Portal under "Certificates & secrets". See the [API module README](modules/api-app-registration/README.md#client-secrets) for rationale.
 
 ## Cost
 

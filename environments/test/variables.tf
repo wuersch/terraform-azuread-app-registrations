@@ -3,30 +3,41 @@ variable "environment" {
   type        = string
 }
 
-variable "app_name" {
-  description = "Base name for the application"
-  type        = string
+variable "backends" {
+  description = "Map of backend APIs to create"
+  type = map(object({
+    display_name = string
+    app_roles = optional(map(object({
+      display_name = string
+      description  = string
+    })), {
+      user = {
+        display_name = "User"
+        description  = "Standard user access"
+      }
+      viewer = {
+        display_name = "Viewer"
+        description  = "Read-only access"
+      }
+      admin = {
+        display_name = "Admin"
+        description  = "Administrative access"
+      }
+    })
+    create_role_groups     = optional(bool, false)
+    role_group_assignments = optional(map(string), {})
+    enable_claims_mapping  = optional(bool, false)
+    owners                 = optional(list(string), [])
+  }))
 }
 
-variable "spa_redirect_uris" {
-  description = "Redirect URIs for the SPA"
-  type        = list(string)
+variable "spas" {
+  description = "Map of SPAs to create. Each SPA references a backend by key."
+  type = map(object({
+    display_name  = string
+    backend       = string # Key from backends map
+    redirect_uris = list(string)
+    owners        = optional(list(string), [])
+  }))
 }
 
-variable "create_role_groups" {
-  description = "Create security groups for app roles (for testing)"
-  type        = bool
-  default     = false
-}
-
-variable "role_group_assignments" {
-  description = "Map of role names to existing group object IDs"
-  type        = map(string)
-  default     = {}
-}
-
-variable "enable_claims_mapping" {
-  description = "Enable claims mapping policy (requires Azure AD Premium)"
-  type        = bool
-  default     = false
-}

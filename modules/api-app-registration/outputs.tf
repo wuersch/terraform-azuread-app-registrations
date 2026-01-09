@@ -33,24 +33,14 @@ output "oauth2_scope_ids" {
 output "app_role_ids" {
   description = "Map of app role names to their IDs"
   value = {
-    user   = random_uuid.role_user.result
-    viewer = random_uuid.role_viewer.result
-    admin  = random_uuid.role_admin.result
+    for k, v in random_uuid.app_role_ids : k => v.result
   }
-}
-
-output "client_secret" {
-  description = "Client secret value (only if create_client_secret=true)"
-  value       = var.create_client_secret ? azuread_application_password.api[0].value : null
-  sensitive   = true
 }
 
 output "role_group_ids" {
   description = "Map of role names to created group object IDs (only if create_role_groups=true)"
   value = var.create_role_groups ? {
-    user   = azuread_group.role_groups["user"].object_id
-    viewer = azuread_group.role_groups["viewer"].object_id
-    admin  = azuread_group.role_groups["admin"].object_id
+    for k, v in azuread_group.role_groups : k => v.object_id
   } : {}
 }
 

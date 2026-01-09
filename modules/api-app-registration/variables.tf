@@ -13,16 +13,26 @@ variable "sign_in_audience" {
   }
 }
 
-variable "create_client_secret" {
-  description = "Create a client secret for service-to-service authentication"
-  type        = bool
-  default     = false
-}
-
-variable "client_secret_expiry_days" {
-  description = "Number of days until the client secret expires"
-  type        = number
-  default     = 365
+variable "app_roles" {
+  description = "Map of app roles to create. Key is the role value, object contains display_name and description."
+  type = map(object({
+    display_name = string
+    description  = string
+  }))
+  default = {
+    user = {
+      display_name = "User"
+      description  = "Standard user access"
+    }
+    viewer = {
+      display_name = "Viewer"
+      description  = "Read-only access"
+    }
+    admin = {
+      display_name = "Admin"
+      description  = "Administrative access"
+    }
+  }
 }
 
 variable "create_role_groups" {
@@ -32,17 +42,19 @@ variable "create_role_groups" {
 }
 
 variable "role_group_assignments" {
-  description = "Map of role names to existing group object IDs for role assignments"
+  description = "Map of role names to existing group object IDs for role assignments. Keys must match app_roles keys."
   type        = map(string)
   default     = {}
-  validation {
-    condition     = alltrue([for k, v in var.role_group_assignments : contains(["user", "viewer", "admin"], k)])
-    error_message = "role_group_assignments keys must be one of: user, viewer, admin"
-  }
 }
 
 variable "enable_claims_mapping" {
   description = "Enable claims mapping policy for sAMAccountName (requires Azure AD Premium)"
   type        = bool
   default     = false
+}
+
+variable "owners" {
+  description = "List of object IDs of users or service principals to set as owners of the app registration"
+  type        = list(string)
+  default     = []
 }

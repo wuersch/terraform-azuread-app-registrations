@@ -21,6 +21,7 @@ locals {
 resource "azuread_application" "spa" {
   display_name     = var.display_name
   sign_in_audience = var.sign_in_audience
+  owners           = length(var.owners) > 0 ? var.owners : null
 
   single_page_application {
     redirect_uris = var.redirect_uris
@@ -46,10 +47,10 @@ resource "azuread_application" "spa" {
 
   # Backend API permission
   required_resource_access {
-    resource_app_id = var.api_client_id
+    resource_app_id = var.backend.application_id
 
     resource_access {
-      id   = var.api_scope_id
+      id   = var.backend.oauth2_scope_ids["user_access"]
       type = "Scope"
     }
   }
@@ -59,4 +60,11 @@ resource "azuread_application" "spa" {
 resource "azuread_service_principal" "spa" {
   client_id = azuread_application.spa.client_id
   tags      = ["WindowsAzureActiveDirectoryIntegratedApp"]
+}
+
+# Pre-authorize SPA to access backend API without additional consent
+resource "azuread_application_pre_authorized" "spa_to_api" {
+  application_id       = var.backend.id
+  authorized_client_id = azuread_application.spa.client_id
+  permission_ids       = [var.backend.oauth2_scope_ids["user_access"]]
 }

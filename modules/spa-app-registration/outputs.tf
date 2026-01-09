@@ -22,7 +22,7 @@ output "msal_config" {
       redirectUri = var.redirect_uris[0]
     }
     api = {
-      scopes = ["api://${var.api_client_id}/user_access"]
+      scopes = ["api://${var.backend.application_id}/user_access"]
     }
   }
 }

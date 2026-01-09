@@ -1,37 +1,26 @@
-# API Outputs
-output "api_application_id" {
-  description = "API application (client) ID"
-  value       = module.api.application_id
+# Backend API configurations
+output "backends" {
+  description = "All backend API configurations"
+  value = {
+    for key, api in module.api : key => {
+      application_id       = api.application_id
+      identifier_uri       = api.identifier_uri
+      service_principal_id = api.service_principal_id
+      spring_boot_config   = api.spring_boot_config
+      role_group_ids       = api.role_group_ids
+    }
+  }
 }
 
-output "api_identifier_uri" {
-  description = "API identifier URI"
-  value       = module.api.identifier_uri
-}
-
-output "api_service_principal_id" {
-  description = "API service principal object ID"
-  value       = module.api.service_principal_id
-}
-
-# SPA Outputs
-output "spa_application_id" {
-  description = "SPA application (client) ID"
-  value       = module.spa.application_id
-}
-
-output "spa_service_principal_id" {
-  description = "SPA service principal object ID"
-  value       = module.spa.service_principal_id
-}
-
-# Configuration Outputs
-output "msal_config" {
-  description = "MSAL.js configuration for frontend"
-  value       = module.spa.msal_config
-}
-
-output "spring_boot_config" {
-  description = "Spring Boot Azure AD configuration"
-  value       = module.api.spring_boot_config
+# SPA configurations
+output "spas" {
+  description = "All SPA configurations"
+  value = {
+    for key, spa in module.spa : key => {
+      application_id       = spa.application_id
+      service_principal_id = spa.service_principal_id
+      msal_config          = spa.msal_config
+      backend              = var.spas[key].backend
+    }
+  }
 }

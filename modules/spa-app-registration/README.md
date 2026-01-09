@@ -10,8 +10,7 @@ module "spa" {
 
   display_name  = "My SPA"
   redirect_uris = ["http://localhost:3000"]
-  api_client_id = module.api.application_id
-  api_scope_id  = module.api.oauth2_scope_ids["user_access"]
+  backend       = module.api
 }
 ```
 
@@ -22,8 +21,8 @@ module "spa" {
 | `display_name` | string | required | Display name for the app registration |
 | `redirect_uris` | list(string) | required | SPA redirect URIs |
 | `sign_in_audience` | string | `"AzureADMyOrg"` | Sign-in audience |
-| `api_client_id` | string | required | Backend API application ID |
-| `api_scope_id` | string | required | Backend API `user_access` scope ID |
+| `backend` | object | required | Backend API module reference (provides client_id, scope_id, pre-authorization) |
+| `owners` | list(string) | `[]` | Object IDs of users/service principals to set as owners |
 
 ## Outputs
 
@@ -39,6 +38,7 @@ module "spa" {
 - **Authentication**: Authorization Code flow with PKCE
 - **Implicit flow**: Disabled (both access and ID tokens)
 - **Client secret**: Not used (public client)
+- **Pre-authorization**: Automatically configured for backend API access
 
 ## API Permissions
 
@@ -47,7 +47,7 @@ Automatically configured:
 | API | Permission | Type |
 |-----|------------|------|
 | Microsoft Graph | `User.Read` | Delegated |
-| Backend API | `user_access` | Delegated |
+| Backend API | `user_access` | Delegated (pre-authorized) |
 
 ## MSAL.js Configuration
 

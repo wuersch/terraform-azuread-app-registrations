@@ -1,26 +1,23 @@
-# API App Registration
+# Backend API App Registrations
 module "api" {
-  source = "../../modules/api-app-registration"
+  for_each = var.backends
+  source   = "../../modules/api-app-registration"
 
-  display_name           = "${var.app_name} API (${upper(var.environment)})"
-  create_role_groups     = var.create_role_groups
-  role_group_assignments = var.role_group_assignments
-  enable_claims_mapping  = var.enable_claims_mapping
+  display_name           = "${each.value.display_name} (${upper(var.environment)})"
+  app_roles              = each.value.app_roles
+  create_role_groups     = each.value.create_role_groups
+  role_group_assignments = each.value.role_group_assignments
+  enable_claims_mapping  = each.value.enable_claims_mapping
+  owners                 = each.value.owners
 }
 
-# SPA App Registration
+# SPA App Registrations
 module "spa" {
-  source = "../../modules/spa-app-registration"
+  for_each = var.spas
+  source   = "../../modules/spa-app-registration"
 
-  display_name  = "${var.app_name} SPA (${upper(var.environment)})"
-  redirect_uris = var.spa_redirect_uris
-  api_client_id = module.api.application_id
-  api_scope_id  = module.api.oauth2_scope_ids["user_access"]
-}
-
-# Pre-authorize SPA to access API without additional consent
-resource "azuread_application_pre_authorized" "spa_to_api" {
-  application_id       = module.api.id
-  authorized_client_id = module.spa.application_id
-  permission_ids       = [module.api.oauth2_scope_ids["user_access"]]
+  display_name  = "${each.value.display_name} (${upper(var.environment)})"
+  redirect_uris = each.value.redirect_uris
+  backend       = module.api[each.value.backend]
+  owners        = each.value.owners
 }

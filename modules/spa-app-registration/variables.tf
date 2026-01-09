@@ -22,12 +22,17 @@ variable "sign_in_audience" {
   }
 }
 
-variable "api_client_id" {
-  description = "Backend API application (client) ID"
-  type        = string
+variable "backend" {
+  description = "Backend API module reference. Provides client_id, scope_id, and enables pre-authorization."
+  type = object({
+    application_id   = string
+    id               = string
+    oauth2_scope_ids = map(string)
+  })
 }
 
-variable "api_scope_id" {
-  description = "Backend API user_access scope ID"
-  type        = string
+variable "owners" {
+  description = "List of object IDs of users or service principals to set as owners of the app registration"
+  type        = list(string)
+  default     = []
 }

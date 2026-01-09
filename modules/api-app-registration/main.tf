@@ -16,14 +16,16 @@ data "azuread_client_config" "current" {}
 
 # Generate stable UUIDs for scopes and roles
 resource "random_uuid" "user_access_scope" {}
-resource "random_uuid" "role_user" {}
-resource "random_uuid" "role_viewer" {}
-resource "random_uuid" "role_admin" {}
+
+resource "random_uuid" "app_role_ids" {
+  for_each = var.app_roles
+}
 
 # API App Registration
 resource "azuread_application" "api" {
   display_name     = var.display_name
   sign_in_audience = var.sign_in_audience
+  owners           = length(var.owners) > 0 ? var.owners : null
 
   api {
     requested_access_token_version = var.enable_claims_mapping ? 2 : null
@@ -38,31 +40,16 @@ resource "azuread_application" "api" {
     }
   }
 
-  app_role {
-    id                   = random_uuid.role_user.result
-    display_name         = "User"
-    description          = "Standard user access"
-    value                = "user"
-    allowed_member_types = ["User"]
-    enabled              = true
-  }
-
-  app_role {
-    id                   = random_uuid.role_viewer.result
-    display_name         = "Viewer"
-    description          = "Read-only access"
-    value                = "viewer"
-    allowed_member_types = ["User"]
-    enabled              = true
-  }
-
-  app_role {
-    id                   = random_uuid.role_admin.result
-    display_name         = "Admin"
-    description          = "Administrative access"
-    value                = "admin"
-    allowed_member_types = ["User"]
-    enabled              = true
+  dynamic "app_role" {
+    for_each = var.app_roles
+    content {
+      id                   = random_uuid.app_role_ids[app_role.key].result
+      display_name         = app_role.value.display_name
+      description          = app_role.value.description
+      value                = app_role.key
+      allowed_member_types = ["User"]
+      enabled              = true
+    }
   }
 
   web {
@@ -90,17 +77,9 @@ resource "azuread_service_principal" "api" {
   tags      = ["WindowsAzureActiveDirectoryIntegratedApp"]
 }
 
-# Optional: Client Secret
-resource "azuread_application_password" "api" {
-  count          = var.create_client_secret ? 1 : 0
-  application_id = azuread_application.api.id
-  display_name   = "Terraform managed secret"
-  end_date_relative = "${var.client_secret_expiry_days * 24}h"
-}
-
 # Optional: Create security groups for role assignments
 resource "azuread_group" "role_groups" {
-  for_each         = var.create_role_groups ? toset(["user", "viewer", "admin"]) : toset([])
+  for_each         = var.create_role_groups ? var.app_roles : {}
   display_name     = "${var.display_name}-${each.key}s"
   security_enabled = true
 }
@@ -108,15 +87,11 @@ resource "azuread_group" "role_groups" {
 # Local map combining created groups and provided group assignments
 locals {
   created_group_map = var.create_role_groups ? {
-    user   = azuread_group.role_groups["user"].object_id
-    viewer = azuread_group.role_groups["viewer"].object_id
-    admin  = azuread_group.role_groups["admin"].object_id
+    for k, v in azuread_group.role_groups : k => v.object_id
   } : {}
 
   role_to_uuid = {
-    user   = random_uuid.role_user.result
-    viewer = random_uuid.role_viewer.result
-    admin  = random_uuid.role_admin.result
+    for k, v in random_uuid.app_role_ids : k => v.result
   }
 
   # Merge created groups with provided group assignments (provided takes precedence)
