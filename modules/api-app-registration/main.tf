@@ -25,8 +25,6 @@ resource "azuread_application" "api" {
   display_name     = var.display_name
   sign_in_audience = var.sign_in_audience
 
-  identifier_uris = ["api://${random_uuid.app_uri.result}"]
-
   api {
     requested_access_token_version = var.enable_claims_mapping ? 2 : null
 
@@ -45,7 +43,7 @@ resource "azuread_application" "api" {
     display_name         = "User"
     description          = "Standard user access"
     value                = "user"
-    allowed_member_types = ["User", "Application"]
+    allowed_member_types = ["User"]
     enabled              = true
   }
 
@@ -54,7 +52,7 @@ resource "azuread_application" "api" {
     display_name         = "Viewer"
     description          = "Read-only access"
     value                = "viewer"
-    allowed_member_types = ["User", "Application"]
+    allowed_member_types = ["User"]
     enabled              = true
   }
 
@@ -63,7 +61,7 @@ resource "azuread_application" "api" {
     display_name         = "Admin"
     description          = "Administrative access"
     value                = "admin"
-    allowed_member_types = ["User", "Application"]
+    allowed_member_types = ["User"]
     enabled              = true
   }
 
@@ -73,10 +71,12 @@ resource "azuread_application" "api" {
       id_token_issuance_enabled     = false
     }
   }
+
+  lifecycle {
+    ignore_changes = [identifier_uris]
+  }
 }
 
-# Random UUID for identifier_uri (needed before app is created)
-resource "random_uuid" "app_uri" {}
 
 # Update identifier_uris to use actual application_id after creation
 resource "azuread_application_identifier_uri" "api" {
@@ -87,6 +87,7 @@ resource "azuread_application_identifier_uri" "api" {
 # Service Principal (Enterprise App)
 resource "azuread_service_principal" "api" {
   client_id = azuread_application.api.client_id
+  tags      = ["WindowsAzureActiveDirectoryIntegratedApp"]
 }
 
 # Optional: Client Secret

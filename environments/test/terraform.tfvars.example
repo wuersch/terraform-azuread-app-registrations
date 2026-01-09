@@ -1,0 +1,19 @@
+environment = "dev"
+app_name    = "MyApp"
+
+spa_redirect_uris = [
+  "https://localhost:3000",
+  "https://myapp.example.com"
+]
+
+# Optional: Create security groups for app roles (for testing)
+# create_role_groups = true
+
+# Optional: Map existing group IDs to app roles
+# role_group_assignments = {
+#   "Admin" = "00000000-0000-0000-0000-000000000000"
+#   "User"  = "00000000-0000-0000-0000-000000000000"
+# }
+
+# Optional: Enable claims mapping (requires Azure AD Premium)
+# enable_claims_mapping = true

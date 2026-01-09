@@ -20,7 +20,7 @@ module "spa" {
 
 # Pre-authorize SPA to access API without additional consent
 resource "azuread_application_pre_authorized" "spa_to_api" {
-  application_id       = module.api.object_id
+  application_id       = module.api.id
   authorized_client_id = module.spa.application_id
   permission_ids       = [module.api.oauth2_scope_ids["user_access"]]
 }

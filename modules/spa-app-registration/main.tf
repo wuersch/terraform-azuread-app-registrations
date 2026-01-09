@@ -58,4 +58,5 @@ resource "azuread_application" "spa" {
 # Service Principal (Enterprise App)
 resource "azuread_service_principal" "spa" {
   client_id = azuread_application.spa.client_id
+  tags      = ["WindowsAzureActiveDirectoryIntegratedApp"]
 }

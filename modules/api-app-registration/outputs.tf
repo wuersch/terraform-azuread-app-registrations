@@ -8,6 +8,11 @@ output "object_id" {
   value       = azuread_application.api.object_id
 }
 
+output "id" {
+  description = "Application resource ID (for use with pre_authorized)"
+  value       = azuread_application.api.id
+}
+
 output "service_principal_id" {
   description = "Service principal object ID"
   value       = azuread_service_principal.api.object_id
@@ -61,6 +66,16 @@ output "spring_boot_config" {
               client-id = azuread_application.api.client_id
             }
             app-id-uri = "api://${azuread_application.api.client_id}"
+          }
+        }
+      }
+      security = {
+        oauth2 = {
+          resourceserver = {
+            jwt = {
+              issuer-uri = "https://login.microsoftonline.com/${data.azuread_client_config.current.tenant_id}/v2.0"
+              jwk-set-uri = "https://login.microsoftonline.com/${data.azuread_client_config.current.tenant_id}/discovery/v2.0/keys"
+            }
           }
         }
       }
