@@ -32,7 +32,10 @@ variable "backend" {
 }
 
 variable "owners" {
-  description = "List of object IDs of users or service principals to set as owners of the app registration"
+  description = "List of object IDs of users or service principals to set as owners of the app registration. Minimum 2 required (primary + deputy)."
   type        = list(string)
-  default     = []
+  validation {
+    condition     = length(var.owners) >= 2
+    error_message = "At least 2 owners must be provided (primary + deputy)"
+  }
 }

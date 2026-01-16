@@ -11,6 +11,10 @@ module "api" {
   display_name           = "My API"
   create_role_groups     = true
   enable_claims_mapping  = false
+  owners = [
+    "00000000-0000-0000-0000-000000000000", # Primary owner
+    "11111111-1111-1111-1111-111111111111"  # Deputy owner
+  ]
 }
 ```
 
@@ -35,6 +39,10 @@ module "api" {
       description  = "Full access"
     }
   }
+  owners = [
+    "00000000-0000-0000-0000-000000000000", # Primary owner
+    "11111111-1111-1111-1111-111111111111"  # Deputy owner
+  ]
 }
 ```
 
@@ -48,7 +56,7 @@ module "api" {
 | `create_role_groups` | bool | `false` | Create security groups for roles |
 | `role_group_assignments` | map(string) | `{}` | Map role names to existing group IDs |
 | `enable_claims_mapping` | bool | `false` | Enable sAMAccountName claim (requires Premium) |
-| `owners` | list(string) | `[]` | Object IDs of users/service principals to set as owners |
+| `owners` | list(string) | required | Object IDs of users/service principals (minimum 2: primary + deputy) |
 
 ## Outputs
 

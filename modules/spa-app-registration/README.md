@@ -11,6 +11,10 @@ module "spa" {
   display_name  = "My SPA"
   redirect_uris = ["http://localhost:3000"]
   backend       = module.api
+  owners = [
+    "00000000-0000-0000-0000-000000000000", # Primary owner
+    "11111111-1111-1111-1111-111111111111"  # Deputy owner
+  ]
 }
 ```
 
@@ -22,7 +26,7 @@ module "spa" {
 | `redirect_uris` | list(string) | required | SPA redirect URIs |
 | `sign_in_audience` | string | `"AzureADMyOrg"` | Sign-in audience |
 | `backend` | object | required | Backend API module reference (provides client_id, scope_id, pre-authorization) |
-| `owners` | list(string) | `[]` | Object IDs of users/service principals to set as owners |
+| `owners` | list(string) | required | Object IDs of users/service principals (minimum 2: primary + deputy) |
 
 ## Outputs
 

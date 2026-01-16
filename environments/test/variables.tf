@@ -27,7 +27,7 @@ variable "backends" {
     create_role_groups     = optional(bool, false)
     role_group_assignments = optional(map(string), {})
     enable_claims_mapping  = optional(bool, false)
-    owners                 = optional(list(string), [])
+    owners                 = list(string) # Required: minimum 2 owners (primary + deputy)
   }))
 }
 
@@ -37,7 +37,7 @@ variable "spas" {
     display_name  = string
     backend       = string # Key from backends map
     redirect_uris = list(string)
-    owners        = optional(list(string), [])
+    owners        = list(string) # Required: minimum 2 owners (primary + deputy)
   }))
 }
 
