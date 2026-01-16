@@ -52,7 +52,10 @@ backends = {
   myapp = {
     display_name       = "MyApp API"
     create_role_groups = true
-    # owners = ["00000000-0000-0000-0000-000000000000"]
+    owners = [
+      "00000000-0000-0000-0000-000000000000",  # Primary owner object ID
+      "11111111-1111-1111-1111-111111111111"   # Deputy owner object ID
+    ]
   }
 }
 
@@ -61,6 +64,10 @@ spas = {
     display_name  = "MyApp Web"
     backend       = "myapp"  # References key from backends map
     redirect_uris = ["https://myapp.example.com", "http://localhost:3000"]
+    owners = [
+      "00000000-0000-0000-0000-000000000000",  # Primary owner object ID
+      "11111111-1111-1111-1111-111111111111"   # Deputy owner object ID
+    ]
   }
 }
 ```
@@ -157,13 +164,33 @@ terraform output -json backends
 - **App roles**: Configurable roles with group assignments
 - **Pre-authorization**: SPAs are pre-authorized to access their backend API
 
+## Required Configuration
+
+| Variable | Requirement |
+|----------|-------------|
+| `owners` | Minimum 2 owners required (primary + deputy) |
+
+### Finding User Object IDs
+
+To find user object IDs for the owner configuration:
+
+```bash
+# List all users with their object IDs
+az ad user list --query "[].{Name:displayName, ObjectId:id}" -o table
+
+# Search for a specific user
+az ad user show --id alice@yourtenant.onmicrosoft.com --query "{Name:displayName, ObjectId:id}"
+
+# Get your own user ID
+az ad signed-in-user show --query id -o tsv
+```
+
 ## Optional Features
 
 | Feature | Variable | Default | Requirement |
 |---------|----------|---------|-------------|
 | Create test groups | `create_role_groups` | false | - |
 | Custom app roles | `app_roles` | user/viewer/admin | - |
-| Set owners | `owners` | [] (creator) | - |
 | Claims mapping | `enable_claims_mapping` | false | Azure AD Premium |
 
 ## Client Secrets
