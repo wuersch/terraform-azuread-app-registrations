@@ -1,5 +1,5 @@
 variable "display_name" {
-  description = "Display name for the API app registration"
+  description = "Display name for the backend app registration"
   type        = string
 }
 
@@ -14,10 +14,11 @@ variable "sign_in_audience" {
 }
 
 variable "app_roles" {
-  description = "Map of app roles to create. Key is the role value, object contains display_name and description."
+  description = "Map of app roles to create. Key is the role value, object contains display_name, description, and optionally allowed_member_types (defaults to [\"User\"], use [\"Application\"] or [\"User\", \"Application\"] for client credential flow)."
   type = map(object({
-    display_name = string
-    description  = string
+    display_name         = string
+    description          = string
+    allowed_member_types = optional(list(string), ["User"])
   }))
   default = {
     user = {
@@ -32,6 +33,14 @@ variable "app_roles" {
       display_name = "Admin"
       description  = "Administrative access"
     }
+  }
+  validation {
+    condition = alltrue([
+      for role in values(var.app_roles) : alltrue([
+        for member_type in role.allowed_member_types : contains(["User", "Application"], member_type)
+      ])
+    ])
+    error_message = "allowed_member_types must only contain 'User' and/or 'Application'"
   }
 }
 
@@ -61,3 +70,4 @@ variable "owners" {
     error_message = "At least 2 owners must be provided (primary + deputy)"
   }
 }
+

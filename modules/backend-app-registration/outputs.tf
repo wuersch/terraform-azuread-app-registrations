@@ -1,26 +1,26 @@
 output "application_id" {
   description = "Application (client) ID"
-  value       = azuread_application.api.client_id
+  value       = azuread_application.backend.client_id
 }
 
 output "object_id" {
   description = "Application object ID"
-  value       = azuread_application.api.object_id
+  value       = azuread_application.backend.object_id
 }
 
 output "id" {
   description = "Application resource ID (for use with pre_authorized)"
-  value       = azuread_application.api.id
+  value       = azuread_application.backend.id
 }
 
 output "service_principal_id" {
   description = "Service principal object ID"
-  value       = azuread_service_principal.api.object_id
+  value       = azuread_service_principal.backend.object_id
 }
 
 output "identifier_uri" {
   description = "Application identifier URI (api://...)"
-  value       = "api://${azuread_application.api.client_id}"
+  value       = "api://${azuread_application.backend.client_id}"
 }
 
 output "oauth2_scope_ids" {
@@ -53,9 +53,9 @@ output "spring_boot_config" {
           active-directory = {
             enabled = true
             credential = {
-              client-id = azuread_application.api.client_id
+              client-id = azuread_application.backend.client_id
             }
-            app-id-uri = "api://${azuread_application.api.client_id}"
+            app-id-uri = "api://${azuread_application.backend.client_id}"
           }
         }
       }

@@ -4,12 +4,13 @@ variable "environment" {
 }
 
 variable "backends" {
-  description = "Map of backend APIs to create"
+  description = "Map of backend services to create"
   type = map(object({
     display_name = string
     app_roles = optional(map(object({
-      display_name = string
-      description  = string
+      display_name         = string
+      description          = string
+      allowed_member_types = optional(list(string), ["User"])
     })), {
       user = {
         display_name = "User"
@@ -28,6 +29,10 @@ variable "backends" {
     role_group_assignments = optional(map(string), {})
     enable_claims_mapping  = optional(bool, false)
     owners                 = list(string) # Required: minimum 2 owners (primary + deputy)
+    # Backend-to-backend access (client credential flow)
+    target_backends = optional(map(object({
+      roles = list(string) # App roles to request from the target backend
+    })), {})
   }))
 }
 

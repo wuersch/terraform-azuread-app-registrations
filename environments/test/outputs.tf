@@ -1,13 +1,13 @@
-# Backend API configurations
+# Backend configurations
 output "backends" {
-  description = "All backend API configurations"
+  description = "All backend configurations"
   value = {
-    for key, api in module.api : key => {
-      application_id       = api.application_id
-      identifier_uri       = api.identifier_uri
-      service_principal_id = api.service_principal_id
-      spring_boot_config   = api.spring_boot_config
-      role_group_ids       = api.role_group_ids
+    for key, backend in module.backend : key => {
+      application_id       = backend.application_id
+      identifier_uri       = backend.identifier_uri
+      service_principal_id = backend.service_principal_id
+      spring_boot_config   = backend.spring_boot_config
+      role_group_ids       = backend.role_group_ids
     }
   }
 }

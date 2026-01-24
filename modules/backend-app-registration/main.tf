@@ -21,8 +21,8 @@ resource "random_uuid" "app_role_ids" {
   for_each = var.app_roles
 }
 
-# API App Registration
-resource "azuread_application" "api" {
+# Backend App Registration
+resource "azuread_application" "backend" {
   display_name     = var.display_name
   sign_in_audience = var.sign_in_audience
   owners           = length(var.owners) > 0 ? var.owners : null
@@ -47,7 +47,7 @@ resource "azuread_application" "api" {
       display_name         = app_role.value.display_name
       description          = app_role.value.description
       value                = app_role.key
-      allowed_member_types = ["User"]
+      allowed_member_types = app_role.value.allowed_member_types
       enabled              = true
     }
   }
@@ -66,14 +66,14 @@ resource "azuread_application" "api" {
 
 
 # Update identifier_uris to use actual application_id after creation
-resource "azuread_application_identifier_uri" "api" {
-  application_id = azuread_application.api.id
-  identifier_uri = "api://${azuread_application.api.client_id}"
+resource "azuread_application_identifier_uri" "backend" {
+  application_id = azuread_application.backend.id
+  identifier_uri = "api://${azuread_application.backend.client_id}"
 }
 
 # Service Principal (Enterprise App)
-resource "azuread_service_principal" "api" {
-  client_id = azuread_application.api.client_id
+resource "azuread_service_principal" "backend" {
+  client_id = azuread_application.backend.client_id
   tags      = ["WindowsAzureActiveDirectoryIntegratedApp"]
 }
 
@@ -96,6 +96,7 @@ locals {
 
   # Merge created groups with provided group assignments (provided takes precedence)
   group_role_map = merge(local.created_group_map, var.role_group_assignments)
+
 }
 
 # App Role Assignments to Groups
@@ -103,11 +104,11 @@ resource "azuread_app_role_assignment" "group_roles" {
   for_each            = local.group_role_map
   app_role_id         = local.role_to_uuid[each.key]
   principal_object_id = each.value
-  resource_object_id  = azuread_service_principal.api.object_id
+  resource_object_id  = azuread_service_principal.backend.object_id
 }
 
 # Optional: Claims Mapping Policy (requires Azure AD Premium)
-resource "azuread_claims_mapping_policy" "api" {
+resource "azuread_claims_mapping_policy" "backend" {
   count        = var.enable_claims_mapping ? 1 : 0
   display_name = "${var.display_name} Claims Policy"
   definition = [jsonencode({
@@ -125,8 +126,8 @@ resource "azuread_claims_mapping_policy" "api" {
   })]
 }
 
-resource "azuread_service_principal_claims_mapping_policy_assignment" "api" {
+resource "azuread_service_principal_claims_mapping_policy_assignment" "backend" {
   count                    = var.enable_claims_mapping ? 1 : 0
-  service_principal_id     = azuread_service_principal.api.id
-  claims_mapping_policy_id = azuread_claims_mapping_policy.api[0].id
+  service_principal_id     = azuread_service_principal.backend.id
+  claims_mapping_policy_id = azuread_claims_mapping_policy.backend[0].id
 }
