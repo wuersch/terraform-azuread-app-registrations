@@ -1,6 +1,7 @@
 environment = "dev"
 
 # Find your object ID with: az ad signed-in-user show --query id -o tsv
+# Owners are required (minimum 2: primary + deputy)
 
 # Backend APIs
 backends = {
@@ -8,13 +9,15 @@ backends = {
   portal = {
     display_name       = "Portal API"
     create_role_groups = true
+    owners             = ["00000000-0000-0000-0000-000000000000", "11111111-1111-1111-1111-111111111111"]
     # app_roles not specified -> uses defaults (user, viewer, admin)
-    # Optional: owners = ["00000000-0000-0000-0000-000000000000"]
+    # Optional: enable_claims_mapping = true  # Requires Azure AD Premium
   }
 
   # Billing API: Custom roles, uses existing groups from identity team
   billing = {
     display_name = "Billing API"
+    owners       = ["00000000-0000-0000-0000-000000000000", "11111111-1111-1111-1111-111111111111"]
     app_roles = {
       reader = {
         display_name = "Reader"
@@ -26,10 +29,21 @@ backends = {
       }
     }
     role_group_assignments = {
-      reader = "11111111-1111-1111-1111-111111111111"
-      admin  = "22222222-2222-2222-2222-222222222222"
+      reader = "22222222-2222-2222-2222-222222222222"
+      admin  = "33333333-3333-3333-3333-333333333333"
     }
-    # Optional: enable_claims_mapping = true  # Requires Azure AD Premium
+  }
+
+  # Scheduler API: Backend-to-backend access example (client credential flow)
+  scheduler = {
+    display_name = "Scheduler API"
+    owners       = ["00000000-0000-0000-0000-000000000000", "11111111-1111-1111-1111-111111111111"]
+    # This backend can call the billing API with the specified roles
+    target_backends = {
+      billing = {
+        roles = ["reader"]
+      }
+    }
   }
 }
 
@@ -40,11 +54,13 @@ spas = {
     display_name  = "Portal Web"
     backend       = "portal"
     redirect_uris = ["https://portal.example.com", "http://localhost:3000"]
+    owners        = ["00000000-0000-0000-0000-000000000000", "11111111-1111-1111-1111-111111111111"]
   }
   portal-admin = {
     display_name  = "Portal Admin"
     backend       = "portal"
     redirect_uris = ["https://admin.portal.example.com"]
+    owners        = ["00000000-0000-0000-0000-000000000000", "11111111-1111-1111-1111-111111111111"]
   }
 
   # Single SPA for Billing
@@ -52,5 +68,6 @@ spas = {
     display_name  = "Billing Web"
     backend       = "billing"
     redirect_uris = ["https://billing.example.com"]
+    owners        = ["00000000-0000-0000-0000-000000000000", "11111111-1111-1111-1111-111111111111"]
   }
 }

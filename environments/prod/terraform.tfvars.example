@@ -1,17 +1,24 @@
 environment = "prod"
 
 # Find your object ID with: az ad signed-in-user show --query id -o tsv
+# Owners are required (minimum 2: primary + deputy)
 
 backends = {
   myapp = {
     display_name = "MyApp API"
+    owners       = ["00000000-0000-0000-0000-000000000000", "11111111-1111-1111-1111-111111111111"]
     # In production, typically use existing groups from identity team
     role_group_assignments = {
-      user   = "11111111-1111-1111-1111-111111111111"
-      viewer = "22222222-2222-2222-2222-222222222222"
-      admin  = "33333333-3333-3333-3333-333333333333"
+      user   = "22222222-2222-2222-2222-222222222222"
+      viewer = "33333333-3333-3333-3333-333333333333"
+      admin  = "44444444-4444-4444-4444-444444444444"
     }
-    # Optional: owners = ["00000000-0000-0000-0000-000000000000"]
+    # Optional: target_backends for backend-to-backend access (client credential flow)
+    # target_backends = {
+    #   other-backend = {
+    #     roles = ["reader"]
+    #   }
+    # }
   }
 }
 
@@ -20,5 +27,6 @@ spas = {
     display_name  = "MyApp Web"
     backend       = "myapp"
     redirect_uris = ["https://myapp.company.com"]
+    owners        = ["00000000-0000-0000-0000-000000000000", "11111111-1111-1111-1111-111111111111"]
   }
 }
