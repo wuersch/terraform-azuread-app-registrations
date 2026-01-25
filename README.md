@@ -12,11 +12,11 @@ Terraform modules for managing Azure Entra ID (Azure AD) App Registrations for S
 
 ```
 ├── modules/
-│   ├── api-app-registration/    # Backend API module
-│   └── spa-app-registration/    # SPA frontend module
+│   ├── backend-app-registration/   # Backend API module
+│   └── spa-app-registration/       # SPA frontend module
 ├── environments/
-│   ├── test/                    # Test tenant (DEV, INT, PREPROD, PREPROD02)
-│   └── prod/                    # Production tenant (separate state)
+│   ├── test/                       # Test tenant (DEV, INT, PREPROD, PREPROD02)
+│   └── prod/                       # Production tenant (separate state)
 ```
 
 ## Tenants and Environments
@@ -26,7 +26,16 @@ Terraform modules for managing Azure Entra ID (Azure AD) App Registrations for S
 | `environments/test/` | Test tenant | DEV, INT, PREPROD, PREPROD02 | Local or Azure blob |
 | `environments/prod/` | Production tenant | PROD | Azure blob (separate) |
 
-Stages within the test tenant are distinguished by naming convention (e.g., "MyApp API (DEV)").
+## Naming Convention
+
+App names follow a strict naming convention (enforced by the module):
+
+| Type | Pattern | Example |
+|------|---------|---------|
+| Backend | `{app_name}-Backend-{STAGE}` | `Portal-Backend-DEV` |
+| Frontend (SPA) | `{app_name}-Frontend-{STAGE}` | `Portal-Frontend-DEV` |
+
+You only provide the `app_name` (e.g., "Portal") - the suffix is added automatically.
 
 ## Quick Start
 
@@ -50,7 +59,7 @@ environment = "dev"
 
 backends = {
   myapp = {
-    display_name       = "MyApp API"
+    app_name           = "MyApp"
     create_role_groups = true
     owners = [
       "00000000-0000-0000-0000-000000000000",  # Primary owner object ID
@@ -61,7 +70,7 @@ backends = {
 
 spas = {
   myapp-web = {
-    display_name  = "MyApp Web"
+    app_name      = "MyApp"
     backend       = "myapp"  # References key from backends map
     redirect_uris = ["https://myapp.example.com", "http://localhost:3000"]
     owners = [
@@ -72,6 +81,10 @@ spas = {
 }
 ```
 
+This creates:
+- `MyApp-Backend-DEV` (backend API)
+- `MyApp-Frontend-DEV` (SPA)
+
 ### Multiple SPAs per Backend
 
 You can have multiple SPAs sharing the same backend API:
@@ -79,24 +92,32 @@ You can have multiple SPAs sharing the same backend API:
 ```hcl
 backends = {
   portal = {
-    display_name       = "Portal API"
+    app_name           = "Portal"
     create_role_groups = true
+    owners             = ["...", "..."]
   }
 }
 
 spas = {
   portal-web = {
-    display_name  = "Portal Web"
+    app_name      = "Portal"
     backend       = "portal"
     redirect_uris = ["https://portal.example.com"]
+    owners        = ["...", "..."]
   }
   portal-admin = {
-    display_name  = "Portal Admin"
+    app_name      = "PortalAdmin"
     backend       = "portal"
     redirect_uris = ["https://admin.portal.example.com"]
+    owners        = ["...", "..."]
   }
 }
 ```
+
+This creates:
+- `Portal-Backend-DEV`
+- `Portal-Frontend-DEV`
+- `PortalAdmin-Frontend-DEV`
 
 ### Custom App Roles
 
@@ -105,7 +126,8 @@ Override the default roles (user, viewer, admin):
 ```hcl
 backends = {
   billing = {
-    display_name = "Billing API"
+    app_name = "Billing"
+    owners   = ["...", "..."]
     app_roles = {
       reader = {
         display_name = "Reader"
@@ -120,6 +142,30 @@ backends = {
     role_group_assignments = {
       reader = "11111111-1111-1111-1111-111111111111"
       admin  = "22222222-2222-2222-2222-222222222222"
+    }
+  }
+}
+```
+
+### Backend-to-Backend Access (Client Credential Flow)
+
+For service-to-service communication without user context:
+
+```hcl
+backends = {
+  billing = {
+    app_name = "Billing"
+    owners   = ["...", "..."]
+  }
+
+  scheduler = {
+    app_name = "Scheduler"
+    owners   = ["...", "..."]
+    # This backend can call the billing API with the specified roles
+    target_backends = {
+      billing = {
+        roles = ["reader"]
+      }
     }
   }
 }
@@ -192,10 +238,11 @@ az ad signed-in-user show --query id -o tsv
 | Create test groups | `create_role_groups` | false | - |
 | Custom app roles | `app_roles` | user/viewer/admin | - |
 | Claims mapping | `enable_claims_mapping` | false | Azure AD Premium |
+| Backend-to-backend | `target_backends` | - | - |
 
 ## Client Secrets
 
-Client secrets are not managed by Terraform. Create them manually in the Azure Portal under "Certificates & secrets". See the [API module README](modules/api-app-registration/README.md#client-secrets) for rationale.
+Client secrets are not managed by Terraform. Create them manually in the Azure Portal under "Certificates & secrets". See the [backend module README](modules/backend-app-registration/README.md#client-secrets) for rationale.
 
 ## Cost
 

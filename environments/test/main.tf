@@ -3,7 +3,7 @@ module "backend" {
   for_each = var.backends
   source   = "../../modules/backend-app-registration"
 
-  display_name           = "${each.value.display_name} (${upper(var.environment)})"
+  display_name           = "${each.value.app_name}-Backend-${upper(var.environment)}"
   app_roles              = each.value.app_roles
   create_role_groups     = each.value.create_role_groups
   role_group_assignments = each.value.role_group_assignments
@@ -40,7 +40,7 @@ module "spa" {
   for_each = var.spas
   source   = "../../modules/spa-app-registration"
 
-  display_name  = "${each.value.display_name} (${upper(var.environment)})"
+  display_name  = "${each.value.app_name}-Frontend-${upper(var.environment)}"
   redirect_uris = each.value.redirect_uris
   backend       = module.backend[each.value.backend]
   owners        = each.value.owners

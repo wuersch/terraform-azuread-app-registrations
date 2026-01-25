@@ -6,7 +6,7 @@ variable "environment" {
 variable "backends" {
   description = "Map of backend services to create"
   type = map(object({
-    display_name = string
+    app_name = string
     app_roles = optional(map(object({
       display_name         = string
       description          = string
@@ -39,7 +39,7 @@ variable "backends" {
 variable "spas" {
   description = "Map of SPAs to create. Each SPA references a backend by key."
   type = map(object({
-    display_name  = string
+    app_name      = string
     backend       = string # Key from backends map
     redirect_uris = list(string)
     owners        = list(string) # Required: minimum 2 owners (primary + deputy)
