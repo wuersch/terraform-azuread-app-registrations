@@ -28,7 +28,7 @@ variable "backends" {
     create_role_groups     = optional(bool, false)
     role_group_assignments = optional(map(string), {})
     enable_claims_mapping  = optional(bool, false)
-    owners                 = list(string) # Required: minimum 2 owners (primary + deputy)
+    owners                 = list(string)
     # Backend-to-backend access (client credential flow)
     target_backends = optional(map(object({
       roles = list(string) # App roles to request from the target backend
@@ -42,6 +42,6 @@ variable "spas" {
     app_name      = string
     backend       = string # Key from backends map
     redirect_uris = list(string)
-    owners        = list(string) # Required: minimum 2 owners (primary + deputy)
+    owners        = list(string)
   }))
 }

@@ -61,10 +61,7 @@ backends = {
   myapp = {
     app_name           = "MyApp"
     create_role_groups = true
-    owners = [
-      "00000000-0000-0000-0000-000000000000",  # Primary owner object ID
-      "11111111-1111-1111-1111-111111111111"   # Deputy owner object ID
-    ]
+    owners = ["00000000-0000-0000-0000-000000000000"]
   }
 }
 
@@ -73,10 +70,7 @@ spas = {
     app_name      = "MyApp"
     backend       = "myapp"  # References key from backends map
     redirect_uris = ["https://myapp.example.com", "http://localhost:3000"]
-    owners = [
-      "00000000-0000-0000-0000-000000000000",  # Primary owner object ID
-      "11111111-1111-1111-1111-111111111111"   # Deputy owner object ID
-    ]
+    owners = ["00000000-0000-0000-0000-000000000000"]
   }
 }
 ```
@@ -214,7 +208,7 @@ terraform output -json backends
 
 | Variable | Requirement |
 |----------|-------------|
-| `owners` | Minimum 2 owners required (primary + deputy) |
+| `owners` | At least 1 owner required |
 
 ### Finding User Object IDs
 

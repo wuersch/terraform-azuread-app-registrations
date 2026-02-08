@@ -1,7 +1,7 @@
 environment = "prod"
 
 # Find your object ID with: az ad signed-in-user show --query id -o tsv
-# Owners are required (minimum 2: primary + deputy)
+# At least one owner is required
 #
 # Naming convention (enforced):
 #   Backends: {app_name}-Backend-{STAGE}  (e.g., MyApp-Backend-PROD)

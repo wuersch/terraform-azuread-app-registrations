@@ -63,11 +63,11 @@ variable "enable_claims_mapping" {
 }
 
 variable "owners" {
-  description = "List of object IDs of users or service principals to set as owners of the app registration. Minimum 2 required (primary + deputy)."
+  description = "List of object IDs of users or service principals to set as owners of the app registration."
   type        = list(string)
   validation {
-    condition     = length(var.owners) >= 2
-    error_message = "At least 2 owners must be provided (primary + deputy)"
+    condition     = length(var.owners) >= 1
+    error_message = "At least 1 owner must be provided"
   }
 }
 
