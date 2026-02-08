@@ -28,7 +28,7 @@ resource "azuread_application" "backend" {
   owners           = length(var.owners) > 0 ? var.owners : null
 
   api {
-    requested_access_token_version = var.enable_claims_mapping ? 2 : null
+    requested_access_token_version = 2
 
     oauth2_permission_scope {
       id                         = random_uuid.user_access_scope.result
